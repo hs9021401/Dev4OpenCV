@@ -1,7 +1,6 @@
 package com.foxlinkimage.alex.dev4opencv;
 
 import android.content.Context;
-import android.content.res.Resources;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Point;
@@ -52,23 +51,16 @@ public class OpenCVFunc {
 
     //手指裁切
     public void FingerCrop(Bitmap input) {
-
         //Bitmap covert to Mat
         Mat tmpMat = new Mat(input.getWidth(), input.getHeight(), CvType.CV_8UC1);
         Utils.bitmapToMat(input, tmpMat);
+        mat_alFrameBuffered.add(tmpMat);
 
-        if(!isBufferFull)
-        {
-            mat_alFrameBuffered.add(tmpMat);
-        }else
-        {
-            //跑演算法
-            getFingerPostionAlgorithm();
-        }
+        //TODO:
+        getFingerPostionAlgorithm();
     }
 
-    private void getFingerPostionAlgorithm()
-    {
+    private void getFingerPostionAlgorithm() {
         Mat mattmp = mat_alFrameBuffered.get(3);
 
 

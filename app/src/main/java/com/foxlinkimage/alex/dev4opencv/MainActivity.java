@@ -5,7 +5,6 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
-import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
@@ -15,16 +14,17 @@ import android.widget.ImageView;
 import org.opencv.android.InstallCallbackInterface;
 import org.opencv.android.LoaderCallbackInterface;
 import org.opencv.android.OpenCVLoader;
-import org.opencv.core.Mat;
-import org.opencv.core.Size;
-import org.opencv.imgproc.Imgproc;
-import org.opencv.videoio.VideoCapture;
 
 public class MainActivity extends AppCompatActivity {
     Button btnConvert, btnFingerCrop;
     ImageView img;
     HandlerThread mHandlerThread;
     OpenCVFunc objOpenCVFunc;
+
+    //將opencv .so包進來, 就不需要安裝OpenCV Manager
+    static {
+        System.loadLibrary("opencv_java3");
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,8 +33,7 @@ public class MainActivity extends AppCompatActivity {
         initialize();
     }
 
-    void initialize()
-    {
+    void initialize() {
         img = (ImageView) findViewById(R.id.img);
         btnConvert = (Button) findViewById(R.id.btnConvert);
         btnFingerCrop = (Button) findViewById(R.id.btnFingerCrop);
@@ -48,6 +47,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
         btnFingerCrop.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -60,10 +60,12 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
         //Load default bitmap
-        Bitmap map = BitmapFactory.decodeResource(getResources(), R.drawable.android);
-        img.setImageBitmap(map);
+        Bitmap MyBitmap = BitmapFactory.decodeResource(getResources(), R.drawable.android);
+        img.setImageBitmap(MyBitmap);
     }
+
 
     Runnable mRunnable = new Runnable() {
         @Override
@@ -73,14 +75,14 @@ public class MainActivity extends AppCompatActivity {
                 Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.android);
                 objOpenCVFunc.FingerCrop(bmp);
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(66);   // 15fps
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
             }
+
         }
     };
-
 
 
     private LoaderCallbackInterface mLoaderCallback = new LoaderCallbackInterface() {
@@ -111,10 +113,15 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+
     @Override
     protected void onResume() {
         super.onResume();
-        OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
+        if (!OpenCVLoader.initDebug()) {
+            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
+        } else {
+            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+        }
     }
 
 
