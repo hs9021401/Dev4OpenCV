@@ -15,8 +15,7 @@ import java.util.ArrayList;
 public class OpenCVFunc {
     private Context mContext;
     private ArrayList<Mat> mat_alFrameBuffered; //Store Mat-type image
-    private ArrayList<Point> p_alFourCordinates; //Store four coordinates for finger crop
-
+    public static ArrayList<Point> p_alFourCordinates = new ArrayList<>(); //Store four coordinates for finger crop
     private Boolean isBufferFull;
 
 
@@ -61,12 +60,6 @@ public class OpenCVFunc {
     }
 
     private void getFingerPostionAlgorithm() {
-        Mat mattmp = mat_alFrameBuffered.get(3);
-
-
-        //宣告ArrayList物件, 用來存放四點座標物件
-        p_alFourCordinates = new ArrayList<>();
-
         //宣告四點座標的物件
         Point pLeftTop = new Point();
         Point pRightTop = new Point();
@@ -91,9 +84,11 @@ public class OpenCVFunc {
         p_alFourCordinates.add(pLeftBottom);
         p_alFourCordinates.add(pRightBottom);
 
-
         //回傳集合物件
+    }
 
+    public static Boolean getCordinatesDone() {
+        return (p_alFourCordinates.size() == 4);
     }
 
 

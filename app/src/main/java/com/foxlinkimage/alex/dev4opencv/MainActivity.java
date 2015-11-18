@@ -2,7 +2,9 @@ package com.foxlinkimage.alex.dev4opencv;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Point;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.v7.app.AppCompatActivity;
@@ -13,10 +15,15 @@ import android.widget.ImageView;
 
 import org.opencv.android.InstallCallbackInterface;
 import org.opencv.android.LoaderCallbackInterface;
-import org.opencv.android.OpenCVLoader;
+
+import java.io.BufferedOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    Button btnConvert, btnFingerCrop;
+    Button btnConvert, btnFingerCrop, btnStirch;
     ImageView img;
     HandlerThread mHandlerThread;
     OpenCVFunc objOpenCVFunc;
@@ -37,6 +44,7 @@ public class MainActivity extends AppCompatActivity {
         img = (ImageView) findViewById(R.id.img);
         btnConvert = (Button) findViewById(R.id.btnConvert);
         btnFingerCrop = (Button) findViewById(R.id.btnFingerCrop);
+        btnStirch = (Button) findViewById(R.id.btnStitch);
 
         btnConvert.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -52,11 +60,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 objOpenCVFunc = new OpenCVFunc(getApplicationContext());
-
-                mHandlerThread = new HandlerThread("HandlerThread");
+                mHandlerThread = new HandlerThread("HandlerThread_FingerCrop");
                 mHandlerThread.start();
 
-                new Handler(mHandlerThread.getLooper()).post(mRunnable);
+                new Handler(mHandlerThread.getLooper()).post(mRunnableFingerCrop);
+            }
+        });
+
+        btnStirch.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                objOpenCVFunc = new OpenCVFunc(getApplicationContext());
+                mHandlerThread = new HandlerThread("HandlerThread_Stitch");
+                mHandlerThread.start();
+
+                new Handler(mHandlerThread.getLooper()).post(mRunnableStich);
             }
         });
 
@@ -67,11 +85,11 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    Runnable mRunnable = new Runnable() {
+    Runnable mRunnableFingerCrop = new Runnable() {
         @Override
         public void run() {
-            //每500秒毫丟一張圖，一共40張圖,模擬Finger Crop情境
-            for (int i = 0; i < 40; i++) {
+            //每500秒毫丟一張圖
+            while(!OpenCVFunc.getCordinatesDone()){
                 Bitmap bmp = BitmapFactory.decodeResource(getResources(), R.drawable.android);
                 objOpenCVFunc.FingerCrop(bmp);
                 try {
@@ -81,6 +99,31 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
+            //得到手指裁切圖片四點座標
+            ArrayList<Point> p_alCordinates = OpenCVFunc.p_alFourCordinates;
+
+        }
+    };
+
+    Runnable mRunnableStich = new Runnable() {
+        @Override
+        public void run() {
+            Bitmap bmpStitched;
+            Bitmap bmp1 = BitmapFactory.decodeResource(getResources(), R.drawable.part1);
+            Bitmap bmp2 = BitmapFactory.decodeResource(getResources(), R.drawable.part2);
+            bmpStitched = objOpenCVFunc.Stitch(bmp1, bmp2);
+
+            // Save stitched image to file
+            String strSavePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath() + "/DevOpenCVFunc/1.jpg";
+            File save2File = new File(strSavePath);
+            try {
+                BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(save2File));
+                bmpStitched.compress(Bitmap.CompressFormat.JPEG, 90, bos);
+                bos.flush();
+                bos.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
     };
 
@@ -117,11 +160,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        if (!OpenCVLoader.initDebug()) {
-            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
-        } else {
-            mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
-        }
+//        if (!OpenCVLoader.initDebug()) {
+//            OpenCVLoader.initAsync(OpenCVLoader.OPENCV_VERSION_3_0_0, this, mLoaderCallback);
+//        } else {
+        mLoaderCallback.onManagerConnected(LoaderCallbackInterface.SUCCESS);
+//        }
     }
 
 
